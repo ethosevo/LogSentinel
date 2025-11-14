@@ -1,1 +1,2 @@
-pub(crate) mod nginx;
+pub mod nginx;
+pub mod syslog;

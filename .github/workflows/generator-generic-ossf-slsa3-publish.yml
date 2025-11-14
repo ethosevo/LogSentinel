@@ -23,7 +23,7 @@ jobs:
           profile: minimal
           override: true
 
-      - name: Build LogSentinel Parser (Library)
+      - name: Build and Package Library
         run: |
           cargo build --release
           

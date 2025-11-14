@@ -6,18 +6,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     outputs:
       digests: ${{ steps.hash.outputs.digests }}
 
     steps:
       - uses: actions/checkout@v4
 
-      # ========================================================
-      #
-      # Step 1: Build your parser artifacts
-      #
-      # ========================================================
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -29,14 +27,23 @@ jobs:
         run: |
           cargo build --release
           mkdir -p artifacts
-          cp target/release/deps/liblogsentinel_parser-*.rlib artifacts/ || echo "No .rlib found, skipping"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp target\release\deps\liblogsentinel_parser-*.rlib artifacts\ || echo "No .rlib found"
+            if [ -f target\release\logsentinel-parser.exe ]; then
+              cp target\release\logsentinel-parser.exe artifacts\
+            fi
+          elif [[ "$RUNNER_OS" == "Linux" ]]; then
+            cp target/release/deps/liblogsentinel_parser-*.rlib artifacts/ || echo "No .rlib found"
+            if [ -f target/release/logsentinel-parser ]; then
+              cp target/release/logsentinel-parser artifacts/
+            fi
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            cp target/release/deps/liblogsentinel_parser-*.rlib artifacts/ || echo "No .rlib found"
+            if [ -f target/release/logsentinel-parser ]; then
+              cp target/release/logsentinel-parser artifacts/
+            fi
+          fi
 
-
-      # ========================================================
-      #
-      # Step 2: Generate subject for provenance
-      #
-      # ========================================================
       - name: Generate subject for provenance
         id: hash
         run: |

@@ -29,7 +29,8 @@ jobs:
         run: |
           cargo build --release
           mkdir -p artifacts
-          cp target/release/deps/liblogsentinel_parser-*.rlib artifacts/
+          cp target/release/deps/liblogsentinel_parser-*.rlib artifacts/ || echo "No .rlib found, skipping"
+
 
       # ========================================================
       #

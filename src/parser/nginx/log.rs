@@ -2,7 +2,7 @@ use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{net::IpAddr, str::FromStr};
+use std::{fmt, net::IpAddr, str::FromStr};
 
 use crate::parser::nginx::constants::{
     self as c, DATETIME_FORMAT, HttpMethodStr, MONTHS,
@@ -42,6 +42,23 @@ impl From<&str> for HttpMethod {
     }
 }
 
+impl fmt::Display for HttpMethod {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            HttpMethod::GET => write!(f, "GET"),
+            HttpMethod::POST => write!(f, "POST"),
+            HttpMethod::PUT => write!(f, "PUT"),
+            HttpMethod::PATCH => write!(f, "PATCH"),
+            HttpMethod::DELETE => write!(f, "DELETE"),
+            HttpMethod::HEAD => write!(f, "HEAD"),
+            HttpMethod::OPTIONS => write!(f, "OPTIONS"),
+            HttpMethod::TRACE => write!(f, "TRACE"),
+            HttpMethod::CONNECT => write!(f, "CONNECT"),
+            HttpMethod::OTHER => write!(f, "OTHER"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Protocol {
     HTTP10,
@@ -63,8 +80,20 @@ impl Protocol {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Accesslog {
+impl fmt::Display for Protocol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Protocol::HTTP10 => write!(f, "HTTP/1.0"),
+            Protocol::HTTP11 => write!(f, "HTTP/1.1"),
+            Protocol::HTTP20 => write!(f, "HTTP/2.0"),
+            Protocol::HTTP30 => write!(f, "HTTP/3.0"),
+            Protocol::Other(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AccessLog {
     pub ip: IpAddr,
     pub ts: DateTime<FixedOffset>,
     pub method: HttpMethod,
@@ -79,7 +108,7 @@ pub struct Accesslog {
     pub user_agent: Option<UserAgent>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct UserAgent {
     pub engine: String,
     pub os: String,
@@ -148,7 +177,7 @@ pub fn parse_user_agent(s: &str) -> Option<UserAgent> {
     }
 }
 
-pub fn parse_access_log(line: &str) -> Option<Accesslog> {
+pub fn parse_access_log(line: &str) -> Option<AccessLog> {
     let caps = ACCESS_RE.captures(line)?;
     let ip = IpAddr::from_str(caps.name(c::cap::IP)?.as_str()).ok()?;
 
@@ -205,7 +234,7 @@ pub fn parse_access_log(line: &str) -> Option<Accesslog> {
         None => route.clone(),
     });
 
-    Some(Accesslog {
+    Some(AccessLog {
         ip,
         ts,
         method,
@@ -221,7 +250,7 @@ pub fn parse_access_log(line: &str) -> Option<Accesslog> {
     })
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ErrorLog {
     pub ts: DateTime<FixedOffset>,
     pub level: String,

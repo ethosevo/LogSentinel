@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::parser::syslog::constants::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize,PartialEq)]
 pub struct SyslogEntry {
     pub pri: Option<u8>,
 

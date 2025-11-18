@@ -50,7 +50,7 @@ pub const ACCEPTED: &str = "accepted";
 pub const DEBUG: &str = "debug";
 pub const UNKNOWN:&str = "unknow";
 
-pub const AUTH_LOG:&str = r"^(?P<mon>\w{3}) +(?P<day>\d{1,2}) +(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2}) +(?P<host>\S+) +(?P<app>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$";
+pub const JOURNAL:&str = r"^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2}|Z))\s+(?P<host>\S+)\s+(?P<app>[\w\-./@]+?)(?:\[(?P<pid>\d+)\])?:\s*(?P<msg>[\s\S]*)$";
 
 
 pub const MONTH:&str = "mon";

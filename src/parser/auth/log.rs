@@ -98,14 +98,14 @@ pub struct AuthLogEntry {
     pub facility_severity_raw: String,
 }
 
-static AUTH_LOG_RE: Lazy<Regex> = Lazy::new(|| Regex::new(AUTH_LOG).unwrap());
+static JOURNAL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(JOURNAL).unwrap());
 
 pub fn parse_auth_log_multiline(lines: &[String], tz: FixedOffset) -> Vec<AuthLogEntry> {
     let mut entries = vec![];
     let mut buffer = String::new();
 
     for line in lines {
-        if AUTH_LOG_RE.is_match(line) {
+        if JOURNAL_RE.is_match(line) {
             if !buffer.is_empty() {
                 if let Some(entry) = parse_auth_log(&buffer, tz) {
                     entries.push(entry);
@@ -128,20 +128,14 @@ pub fn parse_auth_log_multiline(lines: &[String], tz: FixedOffset) -> Vec<AuthLo
 }
 
 pub fn parse_auth_log(line: &str, tz: FixedOffset) -> Option<AuthLogEntry> {
-    if let Some(caps) = AUTH_LOG_RE.captures(line) {
-        let mon = caps.name(MONTH)?.as_str();
-        let day: u32 = caps.name(DAY)?.as_str().parse().ok()?;
-        let hour: u32 = caps.name(HOUR)?.as_str().parse().ok()?;
-        let min: u32 = caps.name(MINUTE)?.as_str().parse().ok()?;
-        let sec: u32 = caps.name(SECOND)?.as_str().parse().ok()?;
+    if let Some(caps) = JOURNAL_RE.captures(line) {
+        let ts_str = caps.name("ts")?.as_str();
+        let ts_parsed = DateTime::parse_from_rfc3339(ts_str).unwrap_or_else(|e| {
+            println!("[parse_auth_log] rfc3339 parse error: {:?}", e);
 
-        let year = Utc::now().year();
-        let month = mon_to_num(mon)?;
-        let naive = NaiveDateTime::new(
-            chrono::NaiveDate::from_ymd_opt(year, month, day)?,
-            chrono::NaiveTime::from_hms_opt(hour, min, sec)?,
-        );
-        let ts = DateTime::<FixedOffset>::from_local(naive, tz);
+            DateTime::<FixedOffset>::from_local(Utc::now().naive_utc(), tz)
+        });
+        let ts = ts_parsed.with_timezone(&tz);
 
         let host = caps.name(HOST)?.as_str().to_string();
         let appname = caps.name(APPNAME)?.as_str().to_string();
